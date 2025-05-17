@@ -1,0 +1,58 @@
+# Xcode
+*.xcworkspace/
+*.xcuserdata/
+*.xcscmblueprint/
+DerivedData/
+Build/
+*.pbxproj
+*.xcodeproj/
+
+# Swift Package Manager
+Packages/
+.swiftpm/
+Package.resolved
+
+# CocoaPods
+Pods/
+*.lock
+
+# Carthage
+Carthage/
+
+# Tuist
+Tuist/
+
+# Fastlane
+fastlane/report.xml
+fastlane/screenshots
+fastlane/test_output
+fastlane/.env
+
+# Firebase
+GoogleService-Info.plist
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+*.log
+
+# Swift compiled binaries
+*.swiftdoc
+*.swiftmodule
+*.swiftsourceinfo
+
+# Playgrounds
+timeline.xctimeline
+playground.xcplayground
+
+# Debugging
+*.swp
+*.swo
+*.DS_Store
+
+# SwiftLint
+.swiftlint.yml
+
