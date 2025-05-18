@@ -21,13 +21,17 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             ZStack{
-                VStack{
+                VStack(spacing:0){
+                    Text("Balance general")
+                        .font(.title2)
+                        .bold()
+                        .padding(.bottom,6)
+                    Divider()
                     List{
                         ForEach(rootAccounts()) { account in
                             accountView(for: account)
                         }
                     }.listRowSeparator(.visible)
-                    .navigationTitle("Resumen de Cuentas")
                     .overlay {
                         if viewModel.isLoading && viewModel.summaries.isEmpty {
                             ProgressView()
@@ -47,9 +51,9 @@ struct ContentView: View {
                     .task {
                         await viewModel.loadSummaries(initialDate:formatDate(initialDateScope),endDate:formatDate(endDateScope), projection: proyeccionScope)
                     }
+                    .listStyle(.plain)
                 }
             }
-            
         }
     }
     
