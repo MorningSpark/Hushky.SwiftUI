@@ -9,6 +9,9 @@ import SwiftUI
 
 
 struct ContentView: View {
+    let initialDateScope: Date
+    let endDateScope: Date
+    let proyeccionScope: Bool
     @StateObject private var viewModel = AccountSummaryViewModel(
         useCase: FetchAccountSummaryUseCase(
             repository: AccountingAccountRepository(networkService: NetworkService())
@@ -31,7 +34,7 @@ struct ContentView: View {
                         }
                     }
                     .refreshable {
-                        await viewModel.loadSummaries()
+                        await viewModel.loadSummaries(initialDate:formatDate(initialDateScope),endDate:formatDate(endDateScope), projection: proyeccionScope)
                     }
                     .alert(isPresented: Binding<Bool>(
                         get: { viewModel.errorMessage != nil },
@@ -42,13 +45,20 @@ struct ContentView: View {
                               dismissButton: .default(Text("OK")))
                     }
                     .task {
-                        await viewModel.loadSummaries()
+                        await viewModel.loadSummaries(initialDate:formatDate(initialDateScope),endDate:formatDate(endDateScope), projection: proyeccionScope)
                     }
                 }
             }
             
         }
     }
+    
+    func formatDate(_ date: Date) -> String {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            return formatter.string(from: date)
+        }
+    
     // Nivel 1 (cuentas raíz)
     func rootAccounts() -> [AccountingAccountSumary] {
         viewModel.summaries.filter { $0.level == 1 }
@@ -103,7 +113,7 @@ struct ContentView: View {
         if children.isEmpty {
             // Es hoja → ir a detalle
             return AnyView(
-                NavigationLink(destination: AccountDetailView(account: account)) {
+                NavigationLink(destination: AccountDetailView(initialDateScope: self.initialDateScope, endDateScope: self.endDateScope, proyeccionScope: self.proyeccionScope, account: account)) {
                     rowView(for: account)
                 }
             )
@@ -134,9 +144,3 @@ struct ContentView: View {
     
 }
 
-
-
-
-#Preview {
-    ContentView()
-}

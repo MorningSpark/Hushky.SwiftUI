@@ -8,12 +8,22 @@
 import SwiftUI
 
 struct AccountDetailView: View {
+    let initialDateScope: Date
+    let endDateScope: Date
+    let proyeccionScope: Bool
+    
     let account: AccountingAccountSumary
     @StateObject private var viewModel = AccountLedgerViewModel(
         useCase: FetchAccountLedgerUseCase(
             repository: AccountingEntryRepository(networkService: NetworkService())
         )
     )
+    
+    func formatDate(_ date: Date) -> String {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            return formatter.string(from: date)
+        }
     
     var body: some View {
         NavigationView {
@@ -51,7 +61,7 @@ struct AccountDetailView: View {
                 }
                 
             }.task {
-                await viewModel.loadLedgers(initialDate: "2025-05-01", endDate: "2025-05-30", accountingAccountId: account.id, projectionFlag: false)
+                await viewModel.loadLedgers(initialDate:formatDate(initialDateScope),endDate:formatDate(endDateScope), accountingAccountId: account.id, projectionFlag: proyeccionScope)
                 await viewModel.sortLedgersByDateDescending()
             }
         }
