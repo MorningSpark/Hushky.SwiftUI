@@ -7,29 +7,18 @@ struct ResumeBalanceView: View {
     @State private var mostrarDetalle = false
 
     var body: some View {
-        NavigationStack {
+        
             Form {
                 Section(header: Text("Paramtros iniciales")) {
                     ControlPrettyDateView(fechaInicial: $fechaInicial, fechaFinal: $fechaFinal)
                     Toggle("¿Es proyección?", isOn: $esProyeccion)
                 }
-
-                Section {
-                    Button("Ir a resultado") {
-                        mostrarDetalle = true
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-                }.listRowInsets(EdgeInsets())
-            }
-            .navigationTitle("Balance Cuentas")
-            .navigationDestination(isPresented: $mostrarDetalle) {
-                ContentView(initialDateScope: fechaInicial, endDateScope: fechaFinal, proyeccionScope: esProyeccion)
-            }
-        }
+                
+                NavigationLink(destination: ContentView(initialDateScope: fechaInicial, endDateScope: fechaFinal, proyeccionScope: esProyeccion)) {
+                    Label("Estado de Resultados", systemImage: "chart.pie.fill")
+                }
+            }.navigationTitle("Mayor General")
+        
     }
 }
 

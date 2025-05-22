@@ -11,7 +11,7 @@ import SwiftUI
 struct DogBizApp: App {
     var body: some Scene {
         WindowGroup {
-            ResumeBalanceView()
+            MainMenuView()
         }
     }
 }

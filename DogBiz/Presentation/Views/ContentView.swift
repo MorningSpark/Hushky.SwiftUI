@@ -19,7 +19,7 @@ struct ContentView: View {
     )
     @State private var expandedAccounts: Set<Int> = []
     var body: some View {
-        NavigationView {
+        
             ZStack{
                 VStack(spacing:0){
                     Text("Balance general")
@@ -54,7 +54,6 @@ struct ContentView: View {
                     .listStyle(.plain)
                 }
             }
-        }
     }
     
     func formatDate(_ date: Date) -> String {
