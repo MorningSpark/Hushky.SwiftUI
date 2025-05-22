@@ -1,58 +1,35 @@
 import SwiftUI
 
-// MARK: - Modelo de cuenta contable
-struct AccountItem: Identifiable, Codable {
-    let id: Int
-    let parentId: Int
-    let referenceCode: String
-    let reference: String
-    let name: String
-    let resource: String?
-    let referenceValue: Double?
-    let creationDate: String
-    let alterDate: String?
-}
-
 // MARK: - Modelo de entrada contable
-struct AccountingEntry: Identifiable {
+struct TemporalAccountingEntry: Identifiable {
     let id = UUID()
-    let account: AccountItem
+    let account: AccountingAccount
     let debitAmount: Double
     let creditAmount: Double
 }
-
-struct AccountingEntryRequest: Codable {
-    let description: String
-    let TypeAccount: Int
-    let Date: String
-    let Projection: Bool
-    let TransactionId: Int?
-    let accountingEntryDetails: [AccountingEntryDetail]
-}
-
-struct AccountingEntryDetail: Codable {
-    let accountingAccountId: Int
-    let debitAmount: Double
-    let creditAmount: Double
-}
-
-
-// MARK: - Datos simulados
-let mockAccounts: [AccountItem] = [
-    AccountItem(id: 5, parentId: 0, referenceCode: "5", reference: "Patrimonio", name: "Patrimonio", resource: nil, referenceValue: nil, creationDate: "2025-05-20T02:34:40.52", alterDate: nil),
-    AccountItem(id: 6, parentId: 5, referenceCode: "5.01", reference: "Capital Social", name: "Capital Social", resource: nil, referenceValue: nil, creationDate: "2025-05-20T03:00:00.00", alterDate: nil),
-    AccountItem(id: 7, parentId: 6, referenceCode: "5.01.01", reference: "Aportaciones", name: "Aportaciones", resource: nil, referenceValue: nil, creationDate: "2025-05-20T03:15:00.00", alterDate: nil),
-    AccountItem(id: 12, parentId: 1, referenceCode: "1.01", reference: "Banco Produbanco", name: "Banco Produbanco", resource: nil, referenceValue: nil, creationDate: "2025-05-21T10:00:00.00", alterDate: nil)
-]
 
 // MARK: - Vista Principal
-struct AccountingEntryTest: View {
-    @State private var selectedAccount: AccountItem?
+struct AccountingEntryCreateView: View {
+    @State private var selectedAccount: AccountingAccount?
     @State private var accountValue = ""
-    @State private var accountType = "Crédito"
+    @State private var accountType = "Débito"
     @State private var accountReference = ""
-    @State private var accountingEntries: [AccountingEntry] = []
+    @State private var accountingEntries: [TemporalAccountingEntry] = []
     @State private var showAccountSearch = false
+    @State private var showSuccessAlert = false
+
+    
+    @StateObject private var viewModel = AccountingAccountAllViewModel(
+        useCase: FetchAllAccountingAccountUseCase(
+            repository: AccountingAccountRepository(networkService: NetworkService())
+        )
+    )
+    
+    @StateObject private var createEntryViewModel = CreateAccountingEntryViewModel(
+        useCase: CreateAccountingEntryUseCase(
+            repository: AccountingEntryRepository(networkService: NetworkService())
+        )
+    )
 
     var totalCredit: Double {
         accountingEntries.reduce(0) { $0 + $1.creditAmount }
@@ -67,8 +44,10 @@ struct AccountingEntryTest: View {
     }
 
     var body: some View {
-        NavigationView {
+
             Form {
+                
+                // MARK: - Agregar Cuenta
                 Section(header: Text("Agregar Cuenta")) {
                     Button(action: {
                         showAccountSearch = true
@@ -81,7 +60,7 @@ struct AccountingEntryTest: View {
                         }
                     }
                     .sheet(isPresented: $showAccountSearch) {
-                        AccountSearchView(accounts: mockAccounts) { account in
+                        AccountSearchView(accounts: viewModel.accountingAccounts) { account in
                             selectedAccount = account
                         }
                     }
@@ -91,15 +70,15 @@ struct AccountingEntryTest: View {
 
                     HStack {
                         Picker("Tipo", selection: $accountType) {
-                            Text("Crédito").tag("Crédito")
                             Text("Débito").tag("Débito")
+                            Text("Crédito").tag("Crédito")
                         }
                         .pickerStyle(SegmentedPickerStyle())
 
                         Button {
                             let formattedValue = accountValue.replacingOccurrences(of: ",", with: ".")
                             if let amount = Double(formattedValue), let account = selectedAccount {
-                                let entry = AccountingEntry(
+                                let entry = TemporalAccountingEntry(
                                     account: account,
                                     debitAmount: accountType == "Débito" ? amount : 0,
                                     creditAmount: accountType == "Crédito" ? amount : 0
@@ -117,7 +96,33 @@ struct AccountingEntryTest: View {
                         }
                     }
                 }
+                .task {
+                    await viewModel.loadAccountingAccounts(isTranasction: true)
+                }
 
+                
+
+                // MARK: - Débitos
+                Section(header: Text("Débitos - Total: \(totalDebit, specifier: "%.2f")")) {
+                    ForEach(accountingEntries.filter { $0.debitAmount > 0 }) { entry in
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("\(entry.account.name) - \(entry.debitAmount, specifier: "%.2f")")
+                            }
+                            Spacer()
+                            Button {
+                                accountingEntries.removeAll { $0.id == entry.id }
+                            } label: {
+                                Image(systemName: "trash")
+                                    .foregroundColor(.red)
+                            }
+                            .buttonStyle(BorderlessButtonStyle())
+                        }
+                        .padding(.vertical, 5)
+                    }
+                }
+                
+                // MARK: - Créditos
                 Section(header: Text("Créditos - Total: \(totalCredit, specifier: "%.2f")")) {
                     ForEach(accountingEntries.filter { $0.creditAmount > 0 }) { entry in
                         HStack {
@@ -137,68 +142,80 @@ struct AccountingEntryTest: View {
                     }
                 }
 
-                Section(header: Text("Débitos - Total: \(totalDebit, specifier: "%.2f")")) {
-                    ForEach(accountingEntries.filter { $0.debitAmount > 0 }) { entry in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text("\(entry.account.name) - \(entry.debitAmount, specifier: "%.2f")")
-                            }
-                            Spacer()
-                            Button {
-                                accountingEntries.removeAll { $0.id == entry.id }
-                            } label: {
-                                Image(systemName: "trash")
-                                    .foregroundColor(.red)
-                            }
-                            .buttonStyle(BorderlessButtonStyle())
-                        }
-                        .padding(.vertical, 5)
-                    }
-                }
-
-                Section(header: Text("Finalizar Transacción")) {
+                // MARK: - Finalizar Transacción
+                Section(header: Text("Referencia de Transacción")) {
                     TextEditor(text: $accountReference)
                         .frame(height: 100)
-                        .overlay(RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.gray.opacity(0.5), lineWidth: 1))
-                        .padding(.vertical, 5)
+                        
 
-                    Button("Confirmar") {
-                        let details = accountingEntries.map {
-                                AccountingEntryDetail(
+                    if createEntryViewModel.isLoading {
+                        HStack {
+                            Spacer()
+                            ProgressView("Guardando...")
+                                .progressViewStyle(CircularProgressViewStyle())
+                            Spacer()
+                        }
+                    }
+
+                    
+                }
+                
+                Section{
+                    Button(action:{
+                        Task {
+                            let details = accountingEntries.map {
+                                AccountingEntryDetailRequest(
                                     accountingAccountId: $0.account.id,
                                     debitAmount: $0.debitAmount,
                                     creditAmount: $0.creditAmount
                                 )
                             }
-                        let request = AccountingEntryRequest(
-                                description: accountReference.isEmpty ? "Estado de situacion inicial" : accountReference,
-                                TypeAccount: 0,
-                                Date: "2025-05-01", // o usa DateFormatter para la fecha actual si prefieres
+
+                            let request = AccountingEntryRequest(
+                                description: accountReference.isEmpty ? "prueba gogo" : accountReference,
+                                breed: 0,
+                                Date: nil,
                                 Projection: false,
                                 TransactionId: nil,
                                 accountingEntryDetails: details
                             )
-                        print(request)
-                        // Aquí puedes codificar y enviar a tu backend si lo deseas
+
+                            await createEntryViewModel.createAccountingEntry(acocuntingEntry: request)
+                            if createEntryViewModel.result != nil {
+                                        showSuccessAlert = true
+                                        accountingEntries.removeAll()
+                                        accountReference = ""
+                                    }
+                        }
+                    }) {
+                        Text("Confirmar Transaccion")
+                            .frame(maxWidth: .infinity, alignment: .center).buttonStyle(.borderedProminent)
+                            .padding()
+                        
                     }
-                    .disabled(!isConfirmEnabled)
+                    .disabled(!isConfirmEnabled || createEntryViewModel.isLoading)
                     .buttonStyle(.borderedProminent)
+                    .listRowInsets(EdgeInsets())
                 }
+                
+                
+                
             }
             .navigationTitle("Registro Contable")
+            .alert("Se ha ingresado el registro satisfactoriamente", isPresented: $showSuccessAlert) {
+                Button("OK", role: .cancel) { }
+            }
         }
-    }
 }
 
 // MARK: - Vista de búsqueda de cuentas
 struct AccountSearchView: View {
     @Environment(\.dismiss) var dismiss
     @State private var searchText = ""
-    let accounts: [AccountItem]
-    let onSelect: (AccountItem) -> Void
+    let accounts: [AccountingAccount]
+    let onSelect: (AccountingAccount) -> Void
 
-    var filteredAccounts: [AccountItem] {
+    var filteredAccounts: [AccountingAccount] {
         if searchText.isEmpty {
             return accounts
         } else {
@@ -234,6 +251,6 @@ struct AccountSearchView: View {
 // MARK: - Vista previa
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        AccountingEntryTest()
+        AccountingEntryCreateView()
     }
 }

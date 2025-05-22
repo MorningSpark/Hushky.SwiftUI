@@ -9,5 +9,6 @@ import Foundation
 
 protocol IAccountingAccountRepository {
     func fetchSummary(request: AccountingAccountSumaryRequest) async throws -> [AccountingAccountSumary]
+    func fetchAllAccountingAccounts() async throws -> [AccountingAccount]
 }
 

@@ -8,6 +8,8 @@
 import Foundation
 
 class AccountingAccountRepository: IAccountingAccountRepository {
+    
+    
     private let networkService: INetworkService
     private let baseURL = "https://www.eva-core.net:5002"
 
@@ -20,5 +22,12 @@ class AccountingAccountRepository: IAccountingAccountRepository {
             throw URLError(.badURL)
         }
         return try await networkService.post(url: url, body: request, headers: nil)
+    }
+    
+    func fetchAllAccountingAccounts() async throws -> [AccountingAccount] {
+        guard let url = URL(string: baseURL + "/api/AccountingAccount") else {
+            throw URLError(.badURL)
+        }
+        return try await networkService.get(url: url, headers: nil)
     }
 }

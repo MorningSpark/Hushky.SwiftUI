@@ -9,4 +9,5 @@ import Foundation
 
 protocol IAccountingEntryRepository {
     func fetchAccountLedger(request: AccountLedgerRequest) async throws -> [AccountLedger]
+    func CreateAccountEntry(request: AccountingEntryRequest) async throws -> AccountingEntry
 }
