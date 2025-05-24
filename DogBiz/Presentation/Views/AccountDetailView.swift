@@ -26,7 +26,6 @@ struct AccountDetailView: View {
         }
     
     var body: some View {
-        NavigationView {
             VStack() {
                 Text(account.name)
                     .font(.largeTitle)
@@ -65,6 +64,5 @@ struct AccountDetailView: View {
                 await viewModel.sortLedgersByDateDescending()
             }
         }
-    }
 }
 

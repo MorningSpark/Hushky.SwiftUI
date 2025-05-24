@@ -9,7 +9,7 @@ struct ResumeBalanceView: View {
     var body: some View {
         
             Form {
-                Section(header: Text("Paramtros iniciales")) {
+                Section(header: Text("Parametros iniciales")) {
                     ControlPrettyDateView(fechaInicial: $fechaInicial, fechaFinal: $fechaFinal)
                     Toggle("¿Es proyección?", isOn: $esProyeccion)
                 }

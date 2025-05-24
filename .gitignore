@@ -1,58 +1,33 @@
-# Xcode
+# Archivos de Xcode que no deben subirse
 *.xcworkspace/
-*.xcuserdata/
-*.xcscmblueprint/
+xcuserdata/
+*.xcuserstate
+
+# Archivos generados por la compilación
+build/
 DerivedData/
-Build/
-*.pbxproj
-*.xcodeproj/
 
-# Swift Package Manager
-Packages/
-.swiftpm/
-Package.resolved
-
-# CocoaPods
-Pods/
-*.lock
-
-# Carthage
-Carthage/
-
-# Tuist
-Tuist/
-
-# Fastlane
-fastlane/report.xml
-fastlane/screenshots
-fastlane/test_output
-fastlane/.env
-
-# Firebase
-GoogleService-Info.plist
-
-# macOS
+# Archivos de sistema de macOS
 .DS_Store
-.AppleDouble
-.LSOverride
 
-# Logs
+# Dependencias (CocoaPods, Carthage, Swift Package Manager)
+Pods/
+Carthage/
+.swiftpm/
+
+# Archivos de logs y depuración
 *.log
 
-# Swift compiled binaries
-*.swiftdoc
-*.swiftmodule
-*.swiftsourceinfo
+# SwiftLint (si lo usas)
+.swiftlint.yml
+*.swiftlint.cache
 
-# Playgrounds
-timeline.xctimeline
-playground.xcplayground
-
-# Debugging
+# Archivos temporales del sistema
 *.swp
 *.swo
-*.DS_Store
 
-# SwiftLint
-.swiftlint.yml
+# Ignorar cualquier otro archivo temporal o innecesario
+*.pyc
+*.class
+*.tmp
 

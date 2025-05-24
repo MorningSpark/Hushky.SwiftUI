@@ -1,73 +1,77 @@
-//
-//  ContentView.swift
-//  DogBiz
-//
-//  Created by Richard Borrero Pinargote on 15/5/25.
-//
-
 import SwiftUI
-
 
 struct ContentView: View {
     let initialDateScope: Date
     let endDateScope: Date
     let proyeccionScope: Bool
+    
     @StateObject private var viewModel = AccountSummaryViewModel(
         useCase: FetchAccountSummaryUseCase(
             repository: AccountingAccountRepository(networkService: NetworkService())
         )
     )
+    
     @State private var expandedAccounts: Set<Int> = []
+    
     var body: some View {
-        
-            ZStack{
-                VStack(spacing:0){
-                    Text("Balance general")
-                        .font(.title2)
-                        .bold()
-                        .padding(.bottom,6)
-                    Divider()
-                    List{
-                        ForEach(rootAccounts()) { account in
-                            accountView(for: account)
-                        }
-                    }.listRowSeparator(.visible)
-                    .overlay {
-                        if viewModel.isLoading && viewModel.summaries.isEmpty {
-                            ProgressView()
-                        }
+        ZStack {
+            VStack(spacing: 0) {
+                Text("Balance general")
+                    .font(.title2)
+                    .bold()
+                    .padding(.bottom, 6)
+                
+                Divider()
+                
+                List {
+                    ForEach(rootAccounts()) { account in
+                        accountView(for: account)
                     }
-                    .refreshable {
-                        await viewModel.loadSummaries(initialDate:formatDate(initialDateScope),endDate:formatDate(endDateScope), projection: proyeccionScope)
+                }
+                .listStyle(.insetGrouped)
+                .overlay {
+                    if viewModel.isLoading && viewModel.summaries.isEmpty {
+                        ProgressView()
                     }
-                    .alert(isPresented: Binding<Bool>(
-                        get: { viewModel.errorMessage != nil },
-                        set: { _ in viewModel.errorMessage = nil }
-                    )) {
-                        Alert(title: Text("Error"),
-                              message: Text(viewModel.errorMessage ?? ""),
-                              dismissButton: .default(Text("OK")))
-                    }
-                    .task {
-                        await viewModel.loadSummaries(initialDate:formatDate(initialDateScope),endDate:formatDate(endDateScope), projection: proyeccionScope)
-                    }
-                    .listStyle(.plain)
+                }
+                .refreshable {
+                    await viewModel.loadSummaries(
+                        initialDate: formatDate(initialDateScope),
+                        endDate: formatDate(endDateScope),
+                        projection: proyeccionScope
+                    )
+                }
+                .alert(isPresented: Binding<Bool>(
+                    get: { viewModel.errorMessage != nil },
+                    set: { _ in viewModel.errorMessage = nil }
+                )) {
+                    Alert(
+                        title: Text("Error"),
+                        message: Text(viewModel.errorMessage ?? ""),
+                        dismissButton: .default(Text("OK"))
+                    )
+                }
+                .task {
+                    await viewModel.loadSummaries(
+                        initialDate: formatDate(initialDateScope),
+                        endDate: formatDate(endDateScope),
+                        projection: proyeccionScope
+                    )
                 }
             }
+        }
     }
     
     func formatDate(_ date: Date) -> String {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd"
-            return formatter.string(from: date)
-        }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
     
-    // Nivel 1 (cuentas raíz)
     func rootAccounts() -> [AccountingAccountSumary] {
         viewModel.summaries.filter { $0.level == 1 }
     }
     
-    // Subcuentas inmediatas
     func childAccounts(of parent: AccountingAccountSumary) -> [AccountingAccountSumary] {
         let nextLevel = parent.level + 1
         let prefix = parent.referenceCode + "."
@@ -108,20 +112,41 @@ struct ContentView: View {
         .padding(.vertical, 4)
     }
     
-    // Vista recursiva
-    func accountView(for account: AccountingAccountSumary
-    ) -> AnyView {
+    func accountView(for account: AccountingAccountSumary) -> AnyView {
         let children = childAccounts(of: account)
-
-        if children.isEmpty {
-            // Es hoja → ir a detalle
+        
+        if account.level == 1 {
             return AnyView(
-                NavigationLink(destination: AccountDetailView(initialDateScope: self.initialDateScope, endDateScope: self.endDateScope, proyeccionScope: self.proyeccionScope, account: account)) {
+                Section(header:
+                    HStack {
+                        Text(account.name)
+                            .font(.title3)
+                            .bold()
+                            .foregroundColor(.gray)
+                        Spacer()
+                        Text(String(format: "$%.2f", account.balance))
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.top, 8)
+                ) {
+                    ForEach(children) { child in
+                        accountView(for: child)
+                    }
+                }
+            )
+        } else if children.isEmpty {
+            return AnyView(
+                NavigationLink(destination: AccountDetailView(
+                    initialDateScope: initialDateScope,
+                    endDateScope: endDateScope,
+                    proyeccionScope: proyeccionScope,
+                    account: account
+                )) {
                     rowView(for: account)
                 }
             )
         } else {
-            // Tiene hijos → DisclosureGroup
             return AnyView(
                 DisclosureGroup(
                     isExpanded: Binding(
@@ -144,6 +169,4 @@ struct ContentView: View {
             )
         }
     }
-    
 }
-
