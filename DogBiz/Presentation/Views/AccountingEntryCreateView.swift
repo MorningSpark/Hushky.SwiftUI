@@ -17,6 +17,12 @@ struct AccountingEntryCreateView: View {
     @State private var accountingEntries: [TemporalAccountingEntry] = []
     @State private var showAccountSearch = false
     @State private var showSuccessAlert = false
+    @State private var selectedValue = 1
+    
+    let opciones = [
+            (nombre: "Entrada", valor: 1),
+            (nombre: "Salida", valor: 2)
+        ]
 
     
     @StateObject private var viewModel = AccountingAccountAllViewModel(
@@ -40,15 +46,14 @@ struct AccountingEntryCreateView: View {
     }
 
     var isConfirmEnabled: Bool {
-        totalCredit == totalDebit && !accountingEntries.isEmpty
+        totalCredit == totalDebit && !accountingEntries.isEmpty &&
+        !accountReference.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
 
             Form {
-                
-                // MARK: - Agregar Cuenta
-                Section(header: Text("Agregar Cuenta")) {
+                Section(){
                     Button(action: {
                         showAccountSearch = true
                     }) {
@@ -64,6 +69,10 @@ struct AccountingEntryCreateView: View {
                             selectedAccount = account
                         }
                     }
+                }
+                
+                // MARK: - Agregar Cuenta
+                Section(header: Text("Agregar Cuenta")) {
 
                     TextField("Valor", text: $accountValue)
                         .keyboardType(.decimalPad)
@@ -103,11 +112,17 @@ struct AccountingEntryCreateView: View {
                 
 
                 // MARK: - Débitos
-                Section(header: Text("Débitos - Total: \(totalDebit, specifier: "%.2f")")) {
+                Section(header: Text("Débitos")) {
                     ForEach(accountingEntries.filter { $0.debitAmount > 0 }) { entry in
                         HStack {
                             VStack(alignment: .leading) {
-                                Text("\(entry.account.name) - \(entry.debitAmount, specifier: "%.2f")")
+                                HStack{
+                                    Text("\(entry.account.name)")
+                                    Spacer()
+                                    Text("\(entry.debitAmount, specifier: "%.2f")")
+                                    
+                                }
+                                
                             }
                             Spacer()
                             Button {
@@ -120,31 +135,71 @@ struct AccountingEntryCreateView: View {
                         }
                         .padding(.vertical, 5)
                     }
-                }
-                
-                // MARK: - Créditos
-                Section(header: Text("Créditos - Total: \(totalCredit, specifier: "%.2f")")) {
-                    ForEach(accountingEntries.filter { $0.creditAmount > 0 }) { entry in
+                    
+                    // Total de débitos al final, separado
+                    VStack {
                         HStack {
-                            VStack(alignment: .leading) {
-                                Text("\(entry.account.name) - \(entry.creditAmount, specifier: "%.2f")")
-                            }
+                            Text("Total Débitos:")
+                                .font(.headline)
                             Spacer()
-                            Button {
-                                accountingEntries.removeAll { $0.id == entry.id }
-                            } label: {
-                                Image(systemName: "trash")
-                                    .foregroundColor(.red)
-                            }
-                            .buttonStyle(BorderlessButtonStyle())
+                            Text("\(accountingEntries.filter { $0.debitAmount > 0 }.map { $0.debitAmount }.reduce(0, +), specifier: "%.2f")")
+                                .font(.headline)
+                                .bold()
+                                Image(systemName: "square.and.arrow.down.on.square")
+                     
+                            
                         }
                         .padding(.vertical, 5)
                     }
                 }
 
+                
+                // MARK: - Créditos
+                Section(header: Text("Créditos")) {
+                    ForEach(accountingEntries.filter { $0.creditAmount > 0 }) { entry in
+                        HStack {
+                            VStack(alignment: .leading) {
+                                HStack{
+                                    Text("\(entry.account.name)")
+                                    Spacer()
+                                    Text("\(entry.creditAmount, specifier: "%.2f")")
+                                    
+                                }
+                            }
+                            Spacer()
+                            Button {
+                                accountingEntries.removeAll { $0.id == entry.id }
+                            } label: {
+                                Image(systemName: "trash")
+                                    .foregroundColor(.red)
+                            }
+                            .buttonStyle(BorderlessButtonStyle())
+                        }
+                        .padding(.vertical, 5)
+                    }
+                    
+                    // Total de créditos al final, separado
+                    VStack {
+                        HStack {
+                            Text("Total Créditos:")
+                                .font(.headline)
+                            Spacer()
+                            Text("\(accountingEntries.filter { $0.creditAmount > 0 }.map { $0.creditAmount }.reduce(0, +), specifier: "%.2f")")
+                                .font(.headline)
+                                .bold()
+                            Image(systemName: "square.and.arrow.up.on.square")
+                        }
+                        .padding(.vertical, 5)
+                    }
+                }
+
+
                 // MARK: - Finalizar Transacción
                 Section(header: Text("Referencia de Transacción")) {
                     TextEditor(text: $accountReference)
+                        .onChange(of: accountReference, initial: false) { oldValue, newValue in
+                            // Aquí puedes reaccionar a los cambios, con acceso al valor anterior y nuevo
+                        }
                         .frame(height: 100)
                         
 
@@ -156,6 +211,13 @@ struct AccountingEntryCreateView: View {
                             Spacer()
                         }
                     }
+                    Picker("Tipo de asiento", selection: $selectedValue) {
+                                    ForEach(opciones, id: \.valor) { opcion in
+                                        Text(opcion.nombre).tag(opcion.valor)
+                                    }
+                                }
+                                .pickerStyle(MenuPickerStyle())
+                                
 
                     
                 }
@@ -172,8 +234,8 @@ struct AccountingEntryCreateView: View {
                             }
 
                             let request = AccountingEntryRequest(
-                                description: accountReference.isEmpty ? "prueba gogo" : accountReference,
-                                breed: 0,
+                                description: accountReference.isEmpty ? "asiento por defecto" : accountReference,
+                                breed: selectedValue,
                                 Date: nil,
                                 Projection: false,
                                 TransactionId: nil,
