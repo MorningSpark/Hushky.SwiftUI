@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ContentView: View {
+struct GeneralBalanceView: View {
     let initialDateScope: Date
     let endDateScope: Date
     let proyeccionScope: Bool

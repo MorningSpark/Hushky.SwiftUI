@@ -23,7 +23,6 @@ struct AccountingEntryCreateView: View {
             (nombre: "Entrada", valor: 1),
             (nombre: "Salida", valor: 2)
         ]
-
     
     @StateObject private var viewModel = AccountingAccountAllViewModel(
         useCase: FetchAllAccountingAccountUseCase(
@@ -40,145 +39,122 @@ struct AccountingEntryCreateView: View {
     var totalCredit: Double {
         accountingEntries.reduce(0) { $0 + $1.creditAmount }
     }
-
     var totalDebit: Double {
         accountingEntries.reduce(0) { $0 + $1.debitAmount }
     }
-
+    
     var isConfirmEnabled: Bool {
         totalCredit == totalDebit && !accountingEntries.isEmpty &&
         !accountReference.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
-
-            Form {
-                Section(){
-                    Button(action: {
-                        showAccountSearch = true
-                    }) {
-                        HStack {
-                            Text(selectedAccount?.name ?? "Seleccionar cuenta contable")
-                                .foregroundColor(selectedAccount == nil ? .gray : .primary)
-                            Spacer()
-                            Image(systemName: "magnifyingglass")
-                        }
-                    }
-                    .sheet(isPresented: $showAccountSearch) {
-                        AccountSearchView(accounts: viewModel.accountingAccounts) { account in
-                            selectedAccount = account
-                        }
-                    }
-                }
-                
-                // MARK: - Agregar Cuenta
-                Section(header: Text("Agregar Cuenta")) {
-
-                    TextField("Valor", text: $accountValue)
-                        .keyboardType(.decimalPad)
-
+        Form {
+            // MARK: - Busqueda de cuenta contable
+            Section(){
+                Button(action: { showAccountSearch = true }) {
                     HStack {
-                        Picker("Tipo", selection: $accountType) {
-                            Text("Débito").tag("Débito")
-                            Text("Crédito").tag("Crédito")
+                        Text(selectedAccount?.name ?? "Seleccionar cuenta contable")
+                            .foregroundColor(selectedAccount == nil ? .gray : .primary)
+                        Spacer()
+                        Image(systemName: "magnifyingglass")
+                    }
+                }.sheet(isPresented: $showAccountSearch) {
+                    AccountSearchView(accounts: viewModel.accountingAccounts) { account in
+                        selectedAccount = account
+                    }
+                }
+            }
+                
+            // MARK: - Agregar Cuenta
+            Section(header: Text("Agregar Cuenta")) {
+                TextField("Valor", text: $accountValue)
+                    .keyboardType(.decimalPad)
+                HStack {
+                    Picker("Tipo", selection: $accountType) {
+                        Text("Débito").tag("Débito")
+                        Text("Crédito").tag("Crédito")
+                    }.pickerStyle(SegmentedPickerStyle())
+                    Button {
+                        let formattedValue = accountValue.replacingOccurrences(of: ",", with: ".")
+                        if let amount = Double(formattedValue), let account = selectedAccount {
+                            let entry = TemporalAccountingEntry(
+                                account: account,
+                                debitAmount: accountType == "Débito" ? amount : 0,
+                                creditAmount: accountType == "Crédito" ? amount : 0
+                            )
+                            accountingEntries.append(entry)
+                            selectedAccount = nil
+                            accountValue = ""
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                         }
-                        .pickerStyle(SegmentedPickerStyle())
+                    }
+                    label: {
+                        Image(systemName: "plus.circle.fill")
+                            .resizable()
+                            .frame(width: 30, height: 30)
+                            .foregroundColor(.blue)
+                    }
+                }
+            }.task {
+                await viewModel.loadAccountingAccounts(isTranasction: true)
+            }
 
+            // MARK: - Débitos
+            Section(header: Text("Débitos")) {
+                ForEach(accountingEntries.filter { $0.debitAmount > 0 }) { entry in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            HStack{
+                                Text("\(entry.account.name)")
+                                Spacer()
+                                Text("\(entry.debitAmount, specifier: "%.2f")")
+                            }
+                        }
+                        Spacer()
                         Button {
-                            let formattedValue = accountValue.replacingOccurrences(of: ",", with: ".")
-                            if let amount = Double(formattedValue), let account = selectedAccount {
-                                let entry = TemporalAccountingEntry(
-                                    account: account,
-                                    debitAmount: accountType == "Débito" ? amount : 0,
-                                    creditAmount: accountType == "Crédito" ? amount : 0
-                                )
-                                accountingEntries.append(entry)
-                                selectedAccount = nil
-                                accountValue = ""
-                                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                            }
-                        } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .resizable()
-                                .frame(width: 30, height: 30)
-                                .foregroundColor(.blue)
+                            accountingEntries.removeAll { $0.id == entry.id }
                         }
-                    }
+                        label: {
+                            Image(systemName: "trash")
+                                .foregroundColor(.red)
+                        }.buttonStyle(BorderlessButtonStyle())
+                    }.padding(.vertical, 5)
                 }
-                .task {
-                    await viewModel.loadAccountingAccounts(isTranasction: true)
+                VStack {
+                    HStack {
+                        Text("Total Débitos:")
+                            .font(.headline)
+                        Spacer()
+                        Text("\(accountingEntries.filter { $0.debitAmount > 0 }.map { $0.debitAmount }.reduce(0, +), specifier: "%.2f")")
+                            .font(.headline)
+                            .bold()
+                        Image(systemName: "square.and.arrow.down.on.square")
+                    }.padding(.vertical, 5)
                 }
+            }
 
-                
-
-                // MARK: - Débitos
-                Section(header: Text("Débitos")) {
-                    ForEach(accountingEntries.filter { $0.debitAmount > 0 }) { entry in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                HStack{
-                                    Text("\(entry.account.name)")
-                                    Spacer()
-                                    Text("\(entry.debitAmount, specifier: "%.2f")")
-                                    
-                                }
-                                
+            // MARK: - Créditos
+            Section(header: Text("Créditos")) {
+                ForEach(accountingEntries.filter { $0.creditAmount > 0 }) { entry in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            HStack{
+                                Text("\(entry.account.name)")
+                                Spacer()
+                                Text("\(entry.creditAmount, specifier: "%.2f")")
                             }
-                            Spacer()
-                            Button {
-                                accountingEntries.removeAll { $0.id == entry.id }
-                            } label: {
-                                Image(systemName: "trash")
-                                    .foregroundColor(.red)
-                            }
-                            .buttonStyle(BorderlessButtonStyle())
                         }
-                        .padding(.vertical, 5)
-                    }
-                    
-                    // Total de débitos al final, separado
-                    VStack {
-                        HStack {
-                            Text("Total Débitos:")
-                                .font(.headline)
-                            Spacer()
-                            Text("\(accountingEntries.filter { $0.debitAmount > 0 }.map { $0.debitAmount }.reduce(0, +), specifier: "%.2f")")
-                                .font(.headline)
-                                .bold()
-                                Image(systemName: "square.and.arrow.down.on.square")
-                     
-                            
+                        Spacer()
+                        Button {
+                            accountingEntries.removeAll { $0.id == entry.id }
                         }
-                        .padding(.vertical, 5)
+                        label: {
+                            Image(systemName: "trash")
+                                .foregroundColor(.red)
+                            }.buttonStyle(BorderlessButtonStyle())
+                        }.padding(.vertical, 5)
                     }
-                }
-
-                
-                // MARK: - Créditos
-                Section(header: Text("Créditos")) {
-                    ForEach(accountingEntries.filter { $0.creditAmount > 0 }) { entry in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                HStack{
-                                    Text("\(entry.account.name)")
-                                    Spacer()
-                                    Text("\(entry.creditAmount, specifier: "%.2f")")
-                                    
-                                }
-                            }
-                            Spacer()
-                            Button {
-                                accountingEntries.removeAll { $0.id == entry.id }
-                            } label: {
-                                Image(systemName: "trash")
-                                    .foregroundColor(.red)
-                            }
-                            .buttonStyle(BorderlessButtonStyle())
-                        }
-                        .padding(.vertical, 5)
-                    }
-                    
-                    // Total de créditos al final, separado
                     VStack {
                         HStack {
                             Text("Total Créditos:")
@@ -188,21 +164,16 @@ struct AccountingEntryCreateView: View {
                                 .font(.headline)
                                 .bold()
                             Image(systemName: "square.and.arrow.up.on.square")
-                        }
-                        .padding(.vertical, 5)
+                        }.padding(.vertical, 5)
                     }
                 }
-
 
                 // MARK: - Finalizar Transacción
                 Section(header: Text("Referencia de Transacción")) {
                     TextEditor(text: $accountReference)
                         .onChange(of: accountReference, initial: false) { oldValue, newValue in
                             // Aquí puedes reaccionar a los cambios, con acceso al valor anterior y nuevo
-                        }
-                        .frame(height: 100)
-                        
-
+                        }.frame(height: 100)
                     if createEntryViewModel.isLoading {
                         HStack {
                             Spacer()
@@ -212,102 +183,55 @@ struct AccountingEntryCreateView: View {
                         }
                     }
                     Picker("Tipo de asiento", selection: $selectedValue) {
-                                    ForEach(opciones, id: \.valor) { opcion in
-                                        Text(opcion.nombre).tag(opcion.valor)
-                                    }
-                                }
-                                .pickerStyle(MenuPickerStyle())
-                                
-
-                    
-                }
-                
-                Section{
-                    Button(action:{
-                        Task {
-                            let details = accountingEntries.map {
-                                AccountingEntryDetailRequest(
-                                    accountingAccountId: $0.account.id,
-                                    debitAmount: $0.debitAmount,
-                                    creditAmount: $0.creditAmount
-                                )
-                            }
-
-                            let request = AccountingEntryRequest(
-                                description: accountReference.isEmpty ? "asiento por defecto" : accountReference,
-                                breed: selectedValue,
-                                Date: nil,
-                                Projection: false,
-                                TransactionId: nil,
-                                accountingEntryDetails: details
-                            )
-
-                            await createEntryViewModel.createAccountingEntry(acocuntingEntry: request)
-                            if createEntryViewModel.result != nil {
-                                        showSuccessAlert = true
-                                        accountingEntries.removeAll()
-                                        accountReference = ""
-                                    }
+                        ForEach(opciones, id: \.valor) { opcion in
+                            Text(opcion.nombre).tag(opcion.valor)
                         }
-                    }) {
-                        Text("Confirmar Transaccion")
-                            .frame(maxWidth: .infinity, alignment: .center).buttonStyle(.borderedProminent)
-                            .padding()
-                        
-                    }
-                    .disabled(!isConfirmEnabled || createEntryViewModel.isLoading)
-                    .buttonStyle(.borderedProminent)
-                    .listRowInsets(EdgeInsets())
+                    }.pickerStyle(MenuPickerStyle())
                 }
                 
-                
-                
+            Section {
+                Button(action: {
+                    Task {
+                        let details = accountingEntries.map {
+                            AccountingEntryDetailRequest(
+                                accountingAccountId: $0.account.id,
+                                debitAmount: $0.debitAmount,
+                                creditAmount: $0.creditAmount
+                            )
+                        }
+
+                        let request = AccountingEntryRequest(
+                            description: accountReference.isEmpty ? "asiento por defecto" : accountReference,
+                            breed: selectedValue,
+                            Date: nil,
+                            Projection: false,
+                            TransactionId: nil,
+                            accountingEntryDetails: details
+                        )
+
+                        await createEntryViewModel.createAccountingEntry(acocuntingEntry: request)
+                        if createEntryViewModel.result != nil {
+                            showSuccessAlert = true
+                            accountingEntries.removeAll()
+                            accountReference = ""
+                        }
+                    }
+                }) {
+                    HStack {
+                        Text("Confirmar Transacción")
+                                    Spacer()
+                                    Image(systemName: "tray.and.arrow.down.fill")
+                    }
+                }
+                .disabled(!isConfirmEnabled || createEntryViewModel.isLoading)
+            }
+
             }
             .navigationTitle("Registro Contable")
             .alert("Se ha ingresado el registro satisfactoriamente", isPresented: $showSuccessAlert) {
                 Button("OK", role: .cancel) { }
             }
         }
-}
-
-// MARK: - Vista de búsqueda de cuentas
-struct AccountSearchView: View {
-    @Environment(\.dismiss) var dismiss
-    @State private var searchText = ""
-    let accounts: [AccountingAccount]
-    let onSelect: (AccountingAccount) -> Void
-
-    var filteredAccounts: [AccountingAccount] {
-        if searchText.isEmpty {
-            return accounts
-        } else {
-            return accounts.filter {
-                $0.name.localizedCaseInsensitiveContains(searchText) ||
-                $0.reference.localizedCaseInsensitiveContains(searchText) ||
-                $0.referenceCode.localizedCaseInsensitiveContains(searchText)
-            }
-        }
-    }
-
-    var body: some View {
-        NavigationView {
-            List(filteredAccounts) { account in
-                Button {
-                    onSelect(account)
-                    dismiss()
-                } label: {
-                    VStack(alignment: .leading) {
-                        Text(account.name).fontWeight(.medium)
-                        Text("\(account.referenceCode) - \(account.reference)")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-                }
-            }
-            .navigationTitle("Selecciona Cuenta")
-            .searchable(text: $searchText, prompt: "Buscar por nombre o código")
-        }
-    }
 }
 
 // MARK: - Vista previa

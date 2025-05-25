@@ -14,7 +14,7 @@ struct ResumeBalanceView: View {
                     Toggle("¿Es proyección?", isOn: $esProyeccion)
                 }
                 
-                NavigationLink(destination: ContentView(initialDateScope: fechaInicial, endDateScope: fechaFinal, proyeccionScope: esProyeccion)) {
+                NavigationLink(destination: GeneralBalanceView(initialDateScope: fechaInicial, endDateScope: fechaFinal, proyeccionScope: esProyeccion)) {
                     Label("Estado de Resultados", systemImage: "chart.pie.fill")
                 }
             }.navigationTitle("Mayor General")
