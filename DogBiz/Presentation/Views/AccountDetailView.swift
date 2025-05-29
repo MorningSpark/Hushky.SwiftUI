@@ -50,7 +50,17 @@ struct AccountDetailView: View {
                         Text(String(format: "%.2f$", abs(resume.saldo))).font(.subheadline).foregroundColor(resume.saldo>=0 ? .green : .red)
                     }
                     
-                }.alert(isPresented: Binding<Bool>(
+                }
+                .overlay {
+                    if viewModel.isLoading && viewModel.ledgers.isEmpty {
+                        ProgressView()
+                    }
+                }
+                .refreshable {
+                    await viewModel.loadLedgers(initialDate:formatDate(initialDateScope),endDate:formatDate(endDateScope), accountingAccountId: account.id, projectionFlag: proyeccionScope)
+                    await viewModel.sortLedgersByDateDescending()
+                }
+                .alert(isPresented: Binding<Bool>(
                     get: { viewModel.errorMessage != nil },
                     set: { _ in viewModel.errorMessage = nil }
                 )) {

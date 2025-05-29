@@ -1,7 +1,5 @@
 import SwiftUI
 
-import SwiftUI
-
 struct MainMenuView: View {
     var body: some View {
         NavigationView {
@@ -13,6 +11,9 @@ struct MainMenuView: View {
 
                     NavigationLink(destination: AccountingEntryCreateView()) {
                         Label("Registrar Asiento", systemImage: "square.and.pencil")
+                    }
+                    NavigationLink(destination: DayBookView()) {
+                        Label("Libro diario", systemImage: "square.and.pencil")
                     }
                 }
                 
@@ -55,13 +56,13 @@ struct XContentView: View {
             .tag(1)
 
             NavigationView {
-                AccountingEntryCreateView()
+                DayBookView()
                     .navigationTitle("Asientos")
             }
             .id(viewIDs[2])
             .tabItem {
                 Image(systemName: "square.and.pencil")
-                Text("Asientos")
+                Text("Diario")
             }
             .tag(2)
         }

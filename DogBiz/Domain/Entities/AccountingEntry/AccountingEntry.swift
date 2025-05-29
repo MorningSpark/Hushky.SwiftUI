@@ -13,6 +13,6 @@ struct AccountingEntry: Decodable {
     let breed: Int
     let projection: Bool
     let referenceValue: Double
-    let creationDate: String
-    let alterDate: String?
+    let creationDate: Date
+    let alterDate: Date?
 }
