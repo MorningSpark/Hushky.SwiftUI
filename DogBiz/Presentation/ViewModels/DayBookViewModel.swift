@@ -7,15 +7,20 @@
 
 import Foundation
 @MainActor
-class FetchAccountingEntryRangeViewModel: ObservableObject {
+class DayBookViewModel: ObservableObject {
     @Published var accountingEntries: [AccountingEntry] = []
+    @Published var accountingEntryResultCode: Int
+    
     @Published var isLoading = false
     @Published var errorMessage: String?
 
     private let useCase: IFetchAccountingEntryRangeUseCase
+    private let deleteAccountingEntryuseCase: IDeleteAccountingEntryUseCase
 
-    init(useCase: IFetchAccountingEntryRangeUseCase) {
+    init(useCase: IFetchAccountingEntryRangeUseCase, deleteAccountingEntryuseCase: IDeleteAccountingEntryUseCase) {
         self.useCase = useCase
+        self.deleteAccountingEntryuseCase = deleteAccountingEntryuseCase
+        self.accountingEntryResultCode = 0
     }
     
     func sortLedgersByDateDescending() async {
@@ -33,4 +38,18 @@ class FetchAccountingEntryRangeViewModel: ObservableObject {
         }
         isLoading = false
     }
+    
+    func deleteAccountingEntry(accountingEntryId:String) async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            let data = try await deleteAccountingEntryuseCase.execute(accountingEntryId: accountingEntryId)
+            self.accountingEntryResultCode = data
+        } catch {
+            self.errorMessage = error.localizedDescription
+        }
+        isLoading = false
+    }
+    
+    
 }

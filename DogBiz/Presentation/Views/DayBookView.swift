@@ -1,10 +1,11 @@
 import SwiftUI
 
 struct DayBookView: View {
-    @StateObject private var viewModel = FetchAccountingEntryRangeViewModel(
+    @StateObject private var viewModel = DayBookViewModel(
         useCase: FetchAccountingEntryRangeUseCase(
-            repository: AccountingEntryRepository(networkService: NetworkService())
-        )
+            repository: AccountingEntryRepository(networkService: NetworkService())),
+        deleteAccountingEntryuseCase: DeleteAccountingEntryUseCase(
+                repository: AccountingEntryRepository(networkService: NetworkService()))
     )
     @State private var showConfirmation = false
     @State private var transactionToDelete: AccountingEntry?
@@ -41,11 +42,16 @@ struct DayBookView: View {
                         Text(String(format: "%.2f$", abs(transaction.referenceValue))).font(.footnote)
                             .foregroundColor(.gray)
                         Button(action: {
+                            print("pendiente")
+                        }) {
+                            Image(systemName: "chevron.right")
+                        }
+                    }.swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
                             transactionToDelete = transaction
                             showConfirmation = true
-                        }) {
-                            Image(systemName: "trash")
-                                .foregroundColor(.red)
+                        } label: {
+                            Label("Eliminar", systemImage: "trash")
                         }
                     }
                 }
@@ -64,10 +70,25 @@ struct DayBookView: View {
             Button("Cancelar", role: .cancel) {}
         }
         .navigationTitle("Libro Diario")
+        .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            
+                                NavigationLink(destination: AccountingEntryCreateView()) {
+                                    Label("Mayor general", systemImage: "doc.plaintext")
+                                }
+                            
+                        }
+                    }
     }
 
     private func deleteTransaction(_ id: Int) {
-        print("Registro eliminado: ID \(id)")
+        Task{
+            await viewModel.deleteAccountingEntry(accountingEntryId: String(id))
+            await viewModel.loadAccountingEntries()
+            await viewModel.sortLedgersByDateDescending()
+            print("Registro eliminado: ID \(id)")
+        }
+        
     }
 }
 

@@ -29,7 +29,7 @@ class AccountingEntryRepository: IAccountingEntryRepository {
     }
     
     func FetchAccountingEntryRange(initialDate: String? = nil, finalDate: String? = nil) async throws -> [AccountingEntry] {
-        var urlString = baseURL + "/api/AccountingEntry"
+        let urlString = baseURL + "/api/AccountingEntry"
 
         // Construcción de parámetros de consulta
         var queryItems: [URLQueryItem] = []
@@ -56,5 +56,29 @@ class AccountingEntryRepository: IAccountingEntryRepository {
             throw URLError(.badURL)
         }
         return try await networkService.get(url: url, headers: nil)
+    }
+    
+    func DeleteAccountingEntry(accountEntryId: String) async throws -> Int {
+        let urlString = baseURL + "/api/AccountingEntry"
+
+        // Construcción de parámetros de consulta
+        var queryItems: [URLQueryItem] = []
+        queryItems.append(URLQueryItem(name: "accountingEntryId", value: accountEntryId))
+        
+
+        // Si hay parámetros, agregarlos a la URL
+        if !queryItems.isEmpty {
+            var urlComponents = URLComponents(string: urlString)
+            urlComponents?.queryItems = queryItems
+            guard let finalURL = urlComponents?.url else {
+                throw URLError(.badURL)
+            }
+            return try await networkService.delete(url: finalURL, headers: nil)
+        }
+        // Si no hay parámetros, usar la URL sin modificaciones
+        guard let url = URL(string: urlString) else {
+            throw URLError(.badURL)
+        }
+        return try await networkService.delete(url: url, headers: nil)
     }
 }
