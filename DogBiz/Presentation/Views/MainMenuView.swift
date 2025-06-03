@@ -7,42 +7,40 @@ struct MainMenuView: View {
                 Section(header: Text("Opciones principales").padding(.top, 0)) {
                     NavigationLink(destination: ResumeBalanceView()) {
                         Label {
-                            Text("Mayor general") // This text will keep its default color
+                            Text("Mayor general")
                         } icon: {
                             Image(systemName: "doc.plaintext.fill")
-                                .foregroundColor(.red) // Only the icon will be yellow
+                                .foregroundColor(.red)
                         }
                     }
 
                     NavigationLink(destination: AccountingEntryCreateView()) {
                         Label {
-                            Text("Registrar Asiento") // This text will keep its default color
+                            Text("Registrar Asiento")
                         } icon: {
                             Image(systemName: "document.badge.gearshape.fill")
-                                .foregroundColor(.green) // Only the icon will be yellow
+                                .foregroundColor(.green)
                         }
-                        
                     }
+
                     NavigationLink(destination: DayBookView()) {
                         Label("Libro diario", systemImage: "book.pages.fill")
                     }
                 }
             }
-            .listStyle(.insetGrouped) // Opcional, para mejor estilo visual
-            .navigationTitle("Menú")
-            .navigationBarTitleDisplayMode(.automatic)
+            .listStyle(.insetGrouped)
+            .navigationTitle("Menú") // Mantiene el título grande en MainMenuView
+            .navigationBarTitleDisplayMode(.large) // Asegura el título grande
         }
     }
 }
 
 struct XContentView: View {
     @State private var selectedTab = 0
-    @State private var viewIDs: [UUID] = [UUID(), UUID(), UUID()]
 
     var body: some View {
         TabView(selection: $selectedTab) {
             MainMenuView()
-                .id(viewIDs[0])
                 .tabItem {
                     Image(systemName: "list.bullet")
                     Text("Menú")
@@ -52,8 +50,8 @@ struct XContentView: View {
             NavigationView {
                 ResumeBalanceView()
                     .navigationTitle("Balance")
+                    .navigationBarTitleDisplayMode(.inline) // Título normal en otras vistas
             }
-            .id(viewIDs[1])
             .tabItem {
                 Image(systemName: "doc.plaintext")
                 Text("Balance")
@@ -63,22 +61,16 @@ struct XContentView: View {
             NavigationView {
                 DayBookView()
                     .navigationTitle("Asientos")
+                    .navigationBarTitleDisplayMode(.inline) // Título normal en otras vistas
             }
-            .id(viewIDs[2])
             .tabItem {
                 Image(systemName: "square.and.pencil")
                 Text("Diario")
             }
             .tag(2)
         }
-        .onChange(of: selectedTab) {
-            viewIDs[selectedTab] = UUID()
-        }
     }
 }
-
-
-
 
 // Previews
 struct XContentView_Previews: PreviewProvider {
