@@ -16,13 +16,6 @@ struct GeneralBalanceView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                Text("Balance general")
-                    .font(.title2)
-                    .bold()
-                    .padding(.bottom, 6)
-                
-                Divider()
-                
                 List {
                     ForEach(rootAccounts()) { account in
                         accountView(for: account)
@@ -59,7 +52,11 @@ struct GeneralBalanceView: View {
                     )
                 }
             }
-        }
+        }.navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Libro Diario")
+            .navigationBarBackButtonHidden(false)
+            .toolbarBackground(Color(.systemBackground), for: .navigationBar)
+                        .toolbarBackground(.visible, for: .navigationBar)
     }
     
     func formatDate(_ date: Date) -> String {
@@ -168,5 +165,18 @@ struct GeneralBalanceView: View {
                 }
             )
         }
+    }
+}
+
+// Previews
+struct XContentView_PreviewsBalance: PreviewProvider {
+    static var previews: some View {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let initialDate = dateFormatter.date(from: "2025-05-01") ?? Date()
+        let endDate = dateFormatter.date(from: "2025-05-30") ?? Date()
+        
+        return GeneralBalanceView(initialDateScope: initialDate, endDateScope: endDate, proyeccionScope: false)
     }
 }

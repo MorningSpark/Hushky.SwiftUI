@@ -21,7 +21,7 @@ struct DayBookView: View {
 
     var body: some View {
         Form {
-            Section{
+            Section(header: Text("Filtro de asientos")){
                 // Campo de búsqueda con ícono de lupa y sin bordes
                 HStack {
                     TextField("Buscar por descripción...", text: $searchText)
@@ -31,7 +31,7 @@ struct DayBookView: View {
                 }
                 .padding(.horizontal)
             }
-            Section {
+            Section(header: Text("Asientos")) {
                 List(filteredTransactions, id: \.id) { transaction in
                     HStack {
                         VStack(alignment: .leading) {
@@ -57,6 +57,23 @@ struct DayBookView: View {
                 }
             }
         }
+        .overlay {
+            if viewModel.isLoading && viewModel.accountingEntries.isEmpty {
+                ProgressView()
+            }
+        }
+        .refreshable {
+            await viewModel.loadAccountingEntries()
+            await viewModel.sortLedgersByDateDescending()
+        }
+        .alert(isPresented: Binding<Bool>(
+            get: { viewModel.errorMessage != nil },
+            set: { _ in viewModel.errorMessage = nil }
+        )) {
+            Alert(title: Text("Error"),
+                  message: Text(viewModel.errorMessage ?? ""),
+                  dismissButton: .default(Text("OK")))
+        }
         .task {
             await viewModel.loadAccountingEntries()
             await viewModel.sortLedgersByDateDescending()
@@ -69,12 +86,16 @@ struct DayBookView: View {
             }
             Button("Cancelar", role: .cancel) {}
         }
+        .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("Libro Diario")
+        .navigationBarBackButtonHidden(false)
+        .toolbarBackground(Color(.systemBackground), for: .navigationBar)
+                    .toolbarBackground(.visible, for: .navigationBar)
         .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
                             
                                 NavigationLink(destination: AccountingEntryCreateView()) {
-                                    Label("Mayor general", systemImage: "doc.plaintext")
+                                    Label("Mayor general", systemImage: "document.badge.plus")
                                 }
                             
                         }

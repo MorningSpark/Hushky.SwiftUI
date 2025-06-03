@@ -2,29 +2,34 @@ import SwiftUI
 
 struct MainMenuView: View {
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 Section(header: Text("Opciones principales").padding(.top, 0)) {
                     NavigationLink(destination: ResumeBalanceView()) {
-                        Label("Mayor general", systemImage: "doc.plaintext")
+                        Label {
+                            Text("Mayor general") // This text will keep its default color
+                        } icon: {
+                            Image(systemName: "doc.plaintext.fill")
+                                .foregroundColor(.red) // Only the icon will be yellow
+                        }
                     }
 
                     NavigationLink(destination: AccountingEntryCreateView()) {
-                        Label("Registrar Asiento", systemImage: "square.and.pencil")
+                        Label {
+                            Text("Registrar Asiento") // This text will keep its default color
+                        } icon: {
+                            Image(systemName: "document.badge.gearshape.fill")
+                                .foregroundColor(.green) // Only the icon will be yellow
+                        }
+                        
                     }
                     NavigationLink(destination: DayBookView()) {
-                        Label("Libro diario", systemImage: "square.and.pencil")
-                    }
-                }
-                
-                Section(header: Text("Transacciones").padding(.top, 0)) {
-                    NavigationLink(destination: CreateTransactionView()) {
-                        Label("Crear transaccion", systemImage: "document.badge.gearshape")
+                        Label("Libro diario", systemImage: "book.pages.fill")
                     }
                 }
             }
             .listStyle(.insetGrouped) // Opcional, para mejor estilo visual
-            .navigationTitle("Menú Principal")
+            .navigationTitle("Menú")
             .navigationBarTitleDisplayMode(.automatic)
         }
     }

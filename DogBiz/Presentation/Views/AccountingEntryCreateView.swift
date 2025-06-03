@@ -53,15 +53,15 @@ struct AccountingEntryCreateView: View {
 
     var body: some View {
         ZStack {
-            Form {
+            Form() {
                 // MARK: - Búsqueda de cuenta contable
-                Section {
+                Section(header: Text("Buscar cuenta")) {
                     Button(action: { showAccountSearch = true }) {
                         HStack {
                             Text(selectedAccount?.name ?? "Seleccionar cuenta contable")
                                 .foregroundColor(selectedAccount == nil ? .gray : .primary)
                             Spacer()
-                            Image(systemName: "magnifyingglass")
+                            Image(systemName: "magnifyingglass").foregroundColor(.gray)
                         }
                     }.sheet(isPresented: $showAccountSearch) {
                         AccountSearchView(accounts: viewModel.accountingAccounts) { account in
@@ -71,7 +71,7 @@ struct AccountingEntryCreateView: View {
                 }
 
                 // MARK: - Agregar Cuenta
-                Section(header: Text("Agregar Cuenta")) {
+                Section(header: Text("Agregar valor")) {
                     TextField("Valor", text: $accountValue)
                         .keyboardType(.decimalPad)
                     HStack {
@@ -95,7 +95,7 @@ struct AccountingEntryCreateView: View {
                                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                             }
                         } label: {
-                            Image(systemName: "plus.circle.fill")
+                            Image(systemName: "plus.app.fill")
                                 .resizable()
                                 .frame(width: 30, height: 30)
                                 .foregroundColor(.blue)
@@ -229,7 +229,7 @@ struct AccountingEntryCreateView: View {
                         HStack {
                             Text("Confirmar Transacción")
                             Spacer()
-                            Image(systemName: "tray.and.arrow.down.fill")
+                            Image(systemName: "square.and.arrow.down.on.square.fill")
                         }
                     }
                     .disabled(!isConfirmEnabled || createEntryViewModel.isLoading)
@@ -253,6 +253,9 @@ struct AccountingEntryCreateView: View {
             }
         }
         .navigationTitle("Registro Contable")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Color(.systemBackground), for: .navigationBar)
+                    .toolbarBackground(.visible, for: .navigationBar)
     }
 }
 

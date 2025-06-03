@@ -14,10 +14,13 @@ struct ResumeBalanceView: View {
                     Toggle("¿Es proyección?", isOn: $esProyeccion)
                 }
                 
-                NavigationLink(destination: GeneralBalanceView(initialDateScope: fechaInicial, endDateScope: fechaFinal, proyeccionScope: esProyeccion)) {
+                NavigationLink(destination: GeneralBalanceView(initialDateScope: fechaInicial, endDateScope: fechaFinal, proyeccionScope: esProyeccion).toolbarRole(.editor)) {
                     Label("Estado de Resultados", systemImage: "chart.pie.fill")
                 }
             }.navigationTitle("Mayor General")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Color(.systemBackground), for: .navigationBar)
+                        .toolbarBackground(.visible, for: .navigationBar)
         
     }
 }
