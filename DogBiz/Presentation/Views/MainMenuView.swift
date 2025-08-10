@@ -48,13 +48,13 @@ struct XContentView: View {
                 .tag(0)
 
             NavigationView {
-                ResumeBalanceView()
-                    .navigationTitle("Balance")
-                    .navigationBarTitleDisplayMode(.inline) // Título normal en otras vistas
+                DashboardView()
+                    .navigationTitle("DashBoard")
+                   
             }
             .tabItem {
                 Image(systemName: "doc.plaintext")
-                Text("Balance")
+                Text("DashBoard")
             }
             .tag(1)
 

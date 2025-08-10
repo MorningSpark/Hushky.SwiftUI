@@ -1,5 +1,12 @@
 import SwiftUI
 
+struct MovementStub: Identifiable {
+    let id = UUID()
+    let parentId: UUID
+    let description: String
+    let amount: Double
+}
+
 struct GeneralBalanceView: View {
     let initialDateScope: Date
     let endDateScope: Date
@@ -31,7 +38,8 @@ struct GeneralBalanceView: View {
                     await viewModel.loadSummaries(
                         initialDate: formatDate(initialDateScope),
                         endDate: formatDate(endDateScope),
-                        projection: proyeccionScope
+                        projection: proyeccionScope,
+                        absoluteBalance: false
                     )
                 }
                 .alert(isPresented: Binding<Bool>(
@@ -48,7 +56,8 @@ struct GeneralBalanceView: View {
                     await viewModel.loadSummaries(
                         initialDate: formatDate(initialDateScope),
                         endDate: formatDate(endDateScope),
-                        projection: proyeccionScope
+                        projection: proyeccionScope,
+                        absoluteBalance: false
                     )
                 }
             }

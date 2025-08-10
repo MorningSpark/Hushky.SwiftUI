@@ -9,6 +9,7 @@ import Foundation
 struct AccountingAccountSumary: Identifiable, Decodable {
     let id: Int
     let name: String
+    let configuration: Int
     let referenceCode: String
     let balance: Double
     

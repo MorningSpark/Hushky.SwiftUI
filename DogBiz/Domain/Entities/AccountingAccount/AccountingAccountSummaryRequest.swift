@@ -10,4 +10,5 @@ struct AccountingAccountSumaryRequest: Encodable {
     let InitialDate: String
     let EndDate: String
     let ProjectionFlag: Bool
+    let AbsoluteBalance: Bool
 }

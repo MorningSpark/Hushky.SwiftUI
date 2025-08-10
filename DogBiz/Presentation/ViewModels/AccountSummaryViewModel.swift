@@ -18,13 +18,14 @@ class AccountSummaryViewModel: ObservableObject {
         self.useCase = useCase
     }
 
-    func loadSummaries(initialDate:String,endDate:String, projection:Bool) async {
+    func loadSummaries(initialDate:String,endDate:String, projection:Bool, absoluteBalance:Bool) async {
         isLoading = true
         errorMessage = nil
         let request = AccountingAccountSumaryRequest(
             InitialDate: initialDate,
             EndDate: endDate,
-            ProjectionFlag: projection
+            ProjectionFlag: projection,
+            AbsoluteBalance: absoluteBalance
         )
 
         do {
